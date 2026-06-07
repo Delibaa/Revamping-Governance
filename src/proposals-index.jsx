@@ -79,15 +79,14 @@ function PendingMini({ p }) {
 }
 
 function ProposalCard({ p }) {
-  const clickable = !!p.href;
+  const clickable = true;
+  const routeState = p.status === "voted" ? "voted" : p.status === "ended" ? "ended" : "active";
   const open = () => {
-    if (!clickable) return;
     if (window.__COMBINED) {
-      const st = p.status === "voted" ? "voted" : p.status === "ended" ? "ended" : "active";
-      window.location.hash = "#/p/" + p.id + "/" + st;
+      window.location.hash = "#/p/" + p.id + "/" + routeState;
       window.scrollTo({ top: 0 });
     } else {
-      window.location.href = p.href;
+      window.location.href = "index.html#/p/" + p.id + "/" + routeState;
     }
   };
   return (

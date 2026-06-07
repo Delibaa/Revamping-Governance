@@ -16,7 +16,6 @@ const PROPOSALS = [
     created: "May 28", votingStart: "Jun 1", votingEnd: "Jun 7",
     eligibleVP: ELIGIBLE_VP, quorumVP: 5_000_000, participationVP: 4_200_000,
     voterCount: 1296,
-    href: "DAO Proposal.html",
   },
   {
     id: "PIP-031",
@@ -28,7 +27,6 @@ const PROPOSALS = [
     created: "May 30", votingStart: "Jun 2", votingEnd: "Jun 8",
     eligibleVP: ELIGIBLE_VP, quorumVP: 5_000_000, participationVP: 6_810_000,
     voterCount: 2104,
-    href: "DAO Proposal.html#voted",
   },
   {
     id: "GRC-009",
@@ -74,7 +72,6 @@ const PROPOSALS = [
     eligibleVP: ELIGIBLE_VP, quorumVP: 5_000_000, participationVP: 7_100_000,
     voterCount: 2310,
     result: { for: 76, against: 24 },
-    href: "DAO Proposal.html#ended",
   },
   {
     id: "TRS-008",

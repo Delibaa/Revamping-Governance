@@ -1,15 +1,22 @@
 /* ============ overview card ============ */
 
-function StatusBadge({ state }) {
-  if (state === "ended") return <span className="badge badge--passed"><span className="dot"></span>Passed</span>;
+function StatusBadge({ detail, state }) {
+  if (detail.phase === "discussion") return <span className="badge badge--ended"><span className="dot"></span>Discussion</span>;
+  if (state === "ended") {
+    return detail.final.passed
+      ? <span className="badge badge--passed"><span className="dot"></span>Passed</span>
+      : <span className="badge badge--failed"><span className="dot"></span>Failed</span>;
+  }
+  if (state === "voted") return <span className="badge badge--active"><span className="dot"></span>Voted</span>;
   return <span className="badge badge--active"><span className="dot"></span>Active</span>;
 }
 
-function Timeline({ state }) {
+function Timeline({ detail, state }) {
+  const discussion = detail.phase === "discussion";
   const steps = [
-    { lbl: "Created", date: PROPOSAL.created, cls: "done" },
-    { lbl: "Voting opens", date: PROPOSAL.votingStart, cls: "done" },
-    { lbl: state === "ended" ? "Closed" : "Closes", date: PROPOSAL.votingEnd, cls: state === "ended" ? "done" : "now" },
+    { lbl: "Created", date: detail.created, cls: "done" },
+    { lbl: "Voting opens", date: detail.votingStart, cls: discussion ? "now" : "done" },
+    { lbl: state === "ended" ? "Closed" : "Closes", date: detail.votingEnd, cls: state === "ended" ? "done" : discussion ? "" : "now" },
   ];
   return (
     <div className="timeline">
@@ -23,10 +30,10 @@ function Timeline({ state }) {
   );
 }
 
-function ParticipationBar({ state }) {
-  const total = PROPOSAL.eligibleVP;
-  const part = state === "ended" ? PROPOSAL.final.participationVP : PROPOSAL.participationVP;
-  const voters = state === "ended" ? PROPOSAL.final.voterCount : PROPOSAL.voterCount;
+function ParticipationBar({ detail, state }) {
+  const total = detail.eligibleVP;
+  const part = state === "ended" ? detail.final.participationVP : detail.participationVP;
+  const voters = state === "ended" ? detail.final.voterCount : detail.voterCount;
   const fillPct = Math.min(100, (part / total) * 100);
   const pct = ((part / total) * 100).toFixed(1);
   return (
@@ -42,17 +49,28 @@ function ParticipationBar({ state }) {
   );
 }
 
-function OverviewCard({ state, myVote, onAction }) {
+function OverviewCard({ detail, state, myVote, onAction }) {
   let resultCell;
   if (state === "ended") {
-    const f = PROPOSAL.final.result;
+    const f = detail.final.result;
     const totalV = f.reduce((a, b) => a + b.vp, 0);
-    const forPct = Math.round((f[0].vp / totalV) * 100);
+    const winner = f.reduce((a, b) => (b.vp > a.vp ? b : a), f[0]);
+    const winnerPct = Math.round((winner.vp / totalV) * 100);
     resultCell = (
       <div className="ov-cell">
         <div className="lbl">Final result</div>
-        <div className="big" style={{ color: "var(--for)" }}>{forPct}% For</div>
-        <div className="sub">Passed · {fmtVP(totalV)} VP cast</div>
+        <div className="big" style={{ color: detail.final.passed ? "var(--for)" : "var(--against)" }}>{winnerPct}% {winner.label}</div>
+        <div className="sub">{detail.final.passed ? "Passed" : "Failed"} · {fmtVP(totalV)} VP cast</div>
+      </div>
+    );
+  } else if (detail.phase === "discussion") {
+    resultCell = (
+      <div className="ov-cell">
+        <div className="lbl">Voting</div>
+        <div className="big" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 17 }}>
+          <Icon name="clock" size={16} /> Opens {detail.votingStart}
+        </div>
+        <div className="sub">Discussion is open before voting begins</div>
       </div>
     );
   } else {
@@ -69,21 +87,22 @@ function OverviewCard({ state, myVote, onAction }) {
 
   let actionBtn;
   if (state === "ended") actionBtn = <button className="btn btn--lg" onClick={onAction}>View full results</button>;
+  else if (detail.phase === "discussion") actionBtn = <button className="btn btn--lg" onClick={onAction}>View voting schedule</button>;
   else if (state === "voted") actionBtn = <button className="btn btn--primary btn--lg" onClick={onAction}>Change vote</button>;
   else actionBtn = <button className="btn btn--primary btn--lg" onClick={onAction}>Vote</button>;
 
   return (
     <section className="card overview" data-screen-label="overview">
-      <p className="ov-summary">{PROPOSAL.summary}</p>
+      <p className="ov-summary">{detail.summary}</p>
       <span className="ov-author">
-        <Avatar seed={PROPOSAL.author} label={PROPOSAL.author} />
-        Proposed by <b style={{ fontWeight: 580, color: "var(--ink)" }}>{PROPOSAL.author}</b>
+        <Avatar seed={detail.author} label={detail.author} />
+        Proposed by <b style={{ fontWeight: 580, color: "var(--ink)" }}>{detail.author}</b>
       </span>
 
       <div className="ov-grid">
         <div className="ov-cell">
           <div className="lbl">Timeline</div>
-          <Timeline state={state} />
+          <Timeline detail={detail} state={state} />
         </div>
         {resultCell}
       </div>
@@ -91,7 +110,7 @@ function OverviewCard({ state, myVote, onAction }) {
       <div style={{ marginTop: 18 }}>
         <div className="ov-cell" style={{ padding: 0 }}>
           <div className="lbl" style={{ marginBottom: 8 }}>Participation</div>
-          <ParticipationBar state={state} />
+          <ParticipationBar detail={detail} state={state} />
         </div>
       </div>
 
@@ -102,13 +121,14 @@ function OverviewCard({ state, myVote, onAction }) {
             <Icon name="checkSmall" size={14} style={{ color: "var(--for)" }} /> You voted · <b style={{ fontWeight: 560, color: "var(--ink-2)", textTransform: "capitalize" }}>{myVote}</b> <span style={{ color: "var(--ink-3)" }}>(only you can see this)</span>
           </span>
         )}
-        {state === "active" && <span className="btn-note">3 days left · your choice stays private</span>}
-        {state === "ended" && <span className="btn-note">Voting closed Jun 7, 2026</span>}
+        {state === "active" && detail.phase !== "discussion" && <span className="btn-note">Your choice stays private</span>}
+        {detail.phase === "discussion" && <span className="btn-note">Voting opens {detail.votingStart}</span>}
+        {state === "ended" && <span className="btn-note">Voting closed {detail.votingEnd}</span>}
       </div>
 
-      {PROPOSAL.fullDescription && (
+      {detail.fullDescription && (
         <div className="ov-body">
-          {PROPOSAL.fullDescription.map((sec, i) => (
+          {detail.fullDescription.map((sec, i) => (
             <div key={i} className="ov-section">
               <h3 className="ov-sh">{sec.heading}</h3>
               {sec.body.split("\n\n").map((para, j) => (

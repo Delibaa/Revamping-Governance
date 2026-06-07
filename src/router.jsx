@@ -11,8 +11,11 @@ function Root() {
 
   const m = /^#\/p\/([^/]+)(?:\/(\w+))?/.exec(route || "");
   if (m) {
+    const proposalId = decodeURIComponent(m[1]);
+    const detail = PROPOSAL_DETAILS && PROPOSAL_DETAILS[proposalId];
+    if (!detail) return <ProposalsApp />;
     const st = ["active", "voted", "ended"].includes(m[2]) ? m[2] : "active";
-    return <DetailApp key={m[1] + st} initialState={st} />;
+    return <DetailApp key={proposalId + st} proposalId={proposalId} detail={detail} initialState={st} />;
   }
   return <ProposalsApp />;
 }

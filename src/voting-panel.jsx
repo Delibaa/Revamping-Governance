@@ -2,7 +2,7 @@
 
 function Sparkline({ data, color = "var(--accent)", fill = "var(--accent-tint)", height = 52 }) {
   const W = 240, H = height, pad = 4;
-  const max = Math.max(...data) * 1.08;
+  const max = Math.max(...data) * 1.08 || 1;
   const pts = data.map((v, i) => {
     const x = pad + (i / (data.length - 1)) * (W - pad * 2);
     const y = H - pad - (v / max) * (H - pad * 2);
@@ -157,14 +157,37 @@ function ReceiptChoiceDialog({ onPick, onClose }) {
 }
 
 /* ---- voting panel ---- */
-function VotingPanel({ state, myVote, onVote }) {
+function UpcomingVotePanel({ detail }) {
+  return (
+    <section className="card" data-screen-label="vote-schedule">
+      <div className="vote-head">
+        <h2 className="card-title">Voting schedule</h2>
+        <span style={{ fontSize: 12, color: "var(--ink-3)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <Icon name="clock" size={13} /> Opens soon
+        </span>
+      </div>
+      <div className="sealed" style={{ borderTop: 0, marginTop: 0 }}>
+        <span className="s-ico"><Icon name="lock" size={17} /></span>
+        <div>
+          <div className="s-title">Voting opens {detail.votingStart}</div>
+          <div className="s-body">
+            This proposal is still in discussion. Eligible voters can review the proposal and comments now; private voting opens on the scheduled start date and closes {detail.votingEnd}.
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function VotingPanel({ detail, state, myVote, onVote }) {
   const [editing, setEditing] = React.useState(false);
   const [sel, setSel] = React.useState(myVote || null);
   const [confirming, setConfirming] = React.useState(false);
   const [broker, setBroker] = React.useState(null);
   React.useEffect(() => { setSel(myVote || null); setEditing(false); }, [state, myVote]);
 
-  if (state === "ended") return <ResultsPanel />;
+  if (detail.phase === "discussion") return <UpcomingVotePanel detail={detail} />;
+  if (state === "ended") return <ResultsPanel detail={detail} />;
 
   const showPicker = state === "active" || editing;
   const brokerName = broker && BROKERS.find((b) => b.key === broker)?.name;
@@ -188,7 +211,7 @@ function VotingPanel({ state, myVote, onVote }) {
       {showPicker ? (
         <>
           <div className="vote-options">
-            {VOTE_OPTIONS.map((o) => (
+            {detail.voteOptions.map((o) => (
               <button key={o.key} className={"vote-opt" + (sel === o.key ? " sel" : "")} onClick={() => setSel(o.key)}>
                 <span className="radio"></span>
                 <span>
@@ -217,9 +240,9 @@ function VotingPanel({ state, myVote, onVote }) {
       <div className="sealed">
         <span className="s-ico"><Icon name="lock" size={17} /></span>
         <div>
-          <div className="s-title">Results are sealed until Jun 7</div>
+          <div className="s-title">Results are sealed until {detail.votingEnd}</div>
           <div className="s-body">
-            No running tally is shown while voting is open. <span className="s-count">{fmtFull(PROPOSAL.voterCount)} of {fmtFull(PROPOSAL.eligibleCount)}</span> eligible voters have participated so far.
+            No running tally is shown while voting is open. <span className="s-count">{fmtFull(detail.voterCount)} of {fmtFull(detail.eligibleCount)}</span> eligible voters have participated so far.
           </div>
         </div>
       </div>
@@ -233,15 +256,15 @@ function VotingPanel({ state, myVote, onVote }) {
 
 /* ---- revealed results (ended) ---- */
 const RESULT_COLOR = { for: "var(--for)", against: "var(--against)" };
-function ResultsPanel() {
-  const f = PROPOSAL.final.result;
+function ResultsPanel({ detail }) {
+  const f = detail.final.result;
   const total = f.reduce((a, b) => a + b.vp, 0);
   const winner = f.reduce((a, b) => (b.vp > a.vp ? b : a), f[0]).key;
   return (
     <section className="card" data-screen-label="results">
       <div className="vote-head">
         <h2 className="card-title">Final results</h2>
-        <span className="badge badge--passed" style={{ fontSize: 11 }}><span className="dot"></span>Passed</span>
+        <span className={"badge " + (detail.final.passed ? "badge--passed" : "badge--failed")} style={{ fontSize: 11 }}><span className="dot"></span>{detail.final.passed ? "Passed" : "Failed"}</span>
       </div>
       <div className="result-list">
         {f.map((r) => {
@@ -260,42 +283,42 @@ function ResultsPanel() {
       <hr className="divider" />
       <div className="privacy" style={{ margin: "16px 20px" }}>
         <span className="p-ico"><Icon name="check" size={17} /></span>
-        <span className="p-text">Quorum of {fmtVP(PROPOSAL.quorumVP)} VP was reached. Individual vote choices were never revealed — only this aggregate.</span>
+        <span className="p-text">Quorum of {fmtVP(detail.quorumVP)} VP was reached. Individual vote choices were never revealed - only this aggregate.</span>
       </div>
     </section>
   );
 }
 
 /* ---- participation card ---- */
-function ParticipationCard({ state }) {
+function ParticipationCard({ detail, state }) {
   const ended = state === "ended";
-  const part = ended ? PROPOSAL.final.participationVP : PROPOSAL.participationVP;
-  const voters = ended ? PROPOSAL.final.voterCount : PROPOSAL.voterCount;
-  const series = ended ? PARTICIPATION_FINAL : PARTICIPATION_SERIES;
-  const turnout = ((part / PROPOSAL.eligibleVP) * 100).toFixed(1);
+  const part = ended ? detail.final.participationVP : detail.participationVP;
+  const voters = ended ? detail.final.voterCount : detail.voterCount;
+  const series = ended ? detail.participationFinal : detail.participationSeries;
+  const turnout = ((part / detail.eligibleVP) * 100).toFixed(1);
   return (
     <section className="card">
       <div className="part-grid">
         <div className="part-cell">
           <div className="lbl">Turnout</div>
           <div className="big">{turnout}%</div>
-          <div className="sub">{fmtVP(part)} of {fmtVP(PROPOSAL.eligibleVP)} VP</div>
+          <div className="sub">{fmtVP(part)} of {fmtVP(detail.eligibleVP)} VP</div>
         </div>
         <div className="part-cell">
           <div className="lbl">Voters</div>
           <div className="big">{fmtFull(voters)}</div>
-          <div className="sub">of {fmtFull(PROPOSAL.eligibleCount)} eligible</div>
+          <div className="sub">of {fmtFull(detail.eligibleCount)} eligible</div>
         </div>
       </div>
       <hr className="divider" />
       <div className="spark">
         <div className="spark-head">
           <span className="lbl">Participation over time</span>
-          <span className="upd">{ended ? "Final" : "Updated 15 min ago"}</span>
+          <span className="upd">{ended ? "Final" : detail.phase === "discussion" ? "Not started" : "Updated 15 min ago"}</span>
         </div>
         <Sparkline data={series} />
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--ink-3)", marginTop: 6 }}>
-          <span>Jun 1</span><span>{ended ? "Jun 7" : "Now"}</span>
+          <span>{detail.votingStart.replace(", 2026", "")}</span><span>{ended ? detail.votingEnd.replace(", 2026", "") : detail.phase === "discussion" ? "Opens" : "Now"}</span>
         </div>
       </div>
     </section>
@@ -303,11 +326,11 @@ function ParticipationCard({ state }) {
 }
 
 /* ---- voter / non-voter list ---- */
-function VoterList({ state }) {
+function VoterList({ detail, state }) {
   const [tab, setTab] = React.useState("voted");
-  const rows = tab === "voted" ? VOTERS : NONVOTERS;
-  const votedCount = state === "ended" ? PROPOSAL.final.voterCount : PROPOSAL.voterCount;
-  const notCount = PROPOSAL.eligibleCount - votedCount;
+  const rows = tab === "voted" ? detail.voters : detail.nonVoters;
+  const votedCount = state === "ended" ? detail.final.voterCount : detail.voterCount;
+  const notCount = detail.eligibleCount - votedCount;
   return (
     <section className="card" style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
       <div className="voter-tabs" style={{ flexShrink: 0 }}>
@@ -325,6 +348,9 @@ function VoterList({ state }) {
         <span style={{ width: 80, textAlign: "right", whiteSpace: "nowrap" }}>Voting Power</span>
       </div>
       <div className="voter-list" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+        {rows.length === 0 && (
+          <div className="idx-empty" style={{ margin: 18 }}>No votes have been cast yet.</div>
+        )}
         {rows.map((v, i) => (
           <div className="voter-row" key={i}>
             <Avatar seed={v.name} label={v.name} />
@@ -346,11 +372,9 @@ function VoterList({ state }) {
 }
 
 /* ---- execution tracker (ended) ---- */
-function ExecutionTracker() {
-  const steps = [
-    { title: "Proposal passed", meta: "Jun 7, 2026 · quorum reached", cls: "done" },
-    { title: "Queued in timelock", meta: "48-hour delay · ends Jun 9", cls: "cur" },
-    { title: "Execute treasury transfer", meta: "1.2M USDC → Grants multisig", cls: "pending" },
+function ExecutionTracker({ detail }) {
+  const steps = detail.execution || [
+    { title: detail.final.passed ? "Proposal passed" : "Proposal failed", meta: detail.votingEnd + " - quorum reached", cls: "done" },
   ];
   return (
     <section className="card card-pad">
