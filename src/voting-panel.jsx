@@ -142,7 +142,7 @@ function SubmitVoteDialog({ onPick, onClose }) {
                 color: broker ? "var(--ink)" : "var(--ink-3)", padding: "11px 36px 11px 14px", borderRadius: "var(--r-md)",
                 border: "1.5px solid var(--line)", background: "var(--card)", cursor: "pointer",
               }}>
-                <option value="" disabled>Choose a custodial broker…</option>
+                <option value="" disabled>Choose a broker…</option>
                 {BROKERS.map((b) => <option key={b.key} value={b.key}>{b.name}</option>)}
               </select>
               <span style={{ position: "absolute", right: 13, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--ink-3)" }}>
