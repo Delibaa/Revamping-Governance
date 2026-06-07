@@ -12,10 +12,16 @@ function initialState() {
 
 function goProposals() {
   if (window.__COMBINED) { window.location.hash = ""; window.scrollTo({ top: 0 }); }
-  else { window.location.href = "Proposals.html"; }
+  else { window.location.href = "index.html"; }
 }
 
-function VoteLayout({ state, myVote, onVote }) {
+function normalizedState(detail, requested) {
+  if (detail.phase === "ended") return "ended";
+  if (["active", "voted", "ended"].includes(requested)) return requested;
+  return "active";
+}
+
+function VoteLayout({ detail, state, myVote, onVote }) {
   const rightRef = React.useRef(null);
   const leftRef = React.useRef(null);
 
@@ -33,26 +39,28 @@ function VoteLayout({ state, myVote, onVote }) {
   return (
     <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
       <div ref={leftRef} style={{ flex: 3, minWidth: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <VoterList state={state} />
+        <VoterList detail={detail} state={state} />
       </div>
       <div ref={rightRef} style={{ flex: 2, minWidth: 0, display: "flex", flexDirection: "column", gap: 18 }}>
-        <VotingPanel state={state} myVote={myVote} onVote={onVote} />
-        {state === "ended" && <ExecutionTracker />}
-        <ParticipationCard state={state} />
+        <VotingPanel detail={detail} state={state} myVote={myVote} onVote={onVote} />
+        {state === "ended" && <ExecutionTracker detail={detail} />}
+        <ParticipationCard detail={detail} state={state} />
       </div>
     </div>
   );
 }
 
-function App({ initialState: initState }) {
-  const [state, setState] = React.useState(initState || initialState); // active | voted | ended
-  const [myVote, setMyVote] = React.useState(() => ((initState || initialState()) === "voted" ? "for" : null));
+function App({ detail: detailProp, initialState: initState }) {
+  const detail = detailProp || (window.PROPOSAL_DETAILS && window.PROPOSAL_DETAILS["PGF-014"]) || window.PROPOSAL;
+  const startState = normalizedState(detail, initState || initialState());
+  const [state, setState] = React.useState(startState); // active | voted | ended
+  const [myVote, setMyVote] = React.useState(() => (startState === "voted" ? "for" : null));
   const [tab, setTab] = React.useState("overview"); // overview | vote | discussion
 
   const goTab = (t) => { setTab(t); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   const changeState = (s) => {
-    setState(s);
+    setState(normalizedState(detail, s));
     if (s === "voted" && !myVote) setMyVote("for");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -63,7 +71,7 @@ function App({ initialState: initState }) {
 
   const TABS = [
     ["overview", "Overview", "doc"],
-    ["vote", state === "ended" ? "Results" : "Vote", "check"],
+    ["vote", state === "ended" ? "Results" : detail.phase === "discussion" ? "Schedule" : "Vote", "check"],
     ["discussion", "Discussion", "chat"],
   ];
 
@@ -71,7 +79,7 @@ function App({ initialState: initState }) {
     <>
       <header className="topbar">
         <div className="topbar-left">
-          <a className="back-link" href={window.__COMBINED ? "#" : "Proposals.html"}
+          <a className="back-link" href={window.__COMBINED ? "#" : "index.html"}
             onClick={(e) => { if (window.__COMBINED) { e.preventDefault(); goProposals(); } }}><Icon name="chevron" size={14} /> Proposals</a>
           <div className="brand">
             <span className="brand-mark"></span> Veil <small>governance</small>
@@ -86,11 +94,11 @@ function App({ initialState: initState }) {
       <div className="detail-head">
         <div className="dh-inner">
           <div className="dh-meta">
-            <StatusBadge state={state} />
-            <span className="dh-id">{PROPOSAL.id}</span>
-            {PROPOSAL.tags.map((t) => <span key={t} className="dh-tag">{t}</span>)}
+            <StatusBadge detail={detail} state={state} />
+            <span className="dh-id">{detail.id}</span>
+            {detail.tags.map((t) => <span key={t} className="dh-tag">{t}</span>)}
           </div>
-          <h1 className="dh-title">{PROPOSAL.title}</h1>
+          <h1 className="dh-title">{detail.title}</h1>
           <nav className="dtabs" role="tablist">
             {TABS.map(([k, l, ic]) => (
               <button key={k} role="tab" aria-selected={tab === k}
@@ -104,15 +112,15 @@ function App({ initialState: initState }) {
 
       <main className="page detail-page">
         {tab === "overview" && (
-          <OverviewCard state={state} myVote={myVote} onAction={onAction} />
+          <OverviewCard detail={detail} state={state} myVote={myVote} onAction={onAction} />
         )}
 
         {tab === "vote" && (
-          <VoteLayout state={state} myVote={myVote} onVote={handleVote} />
+          <VoteLayout detail={detail} state={state} myVote={myVote} onVote={handleVote} />
         )}
 
         {tab === "discussion" && (
-          <DiscussionPanel state={state} />
+          <DiscussionPanel detail={detail} state={state} />
         )}
       </main>
     </>
