@@ -97,6 +97,7 @@ function AnonComment({ c, onUpvote, onReply, depth = 0, locked }) {
       <div className="c-head">
         <AnonAvatar style={{ width: 28, height: 28 }} />
         <span className="c-name" style={{ color: "var(--ink-2)" }}>Anonymous</span>
+        <span className="c-vp">{fmtVP(c.vp)} VP</span>
         {c.badges.map((b) => {
           const m = ANON_BADGE[b];
           return <span key={b} className={"anon-badge " + m.cls}><Icon name={m.icon} size={11} sw={1.8} /> {m.label}</span>;
@@ -207,7 +208,7 @@ function DiscussionPanel({ detail, state }) {
 
   const reply = (parentId, text, isAnon) => {
     const base = isAnon
-      ? { id: "n" + Date.now(), anon: true, badges: myVoted ? ["verified", "voted"] : ["verified"], time: "now", upvotes: 0, text, replies: [] }
+      ? { id: "n" + Date.now(), anon: true, badges: myVoted ? ["verified", "voted"] : ["verified"], vp: ME.vp, time: "now", upvotes: 0, text, replies: [] }
       : { id: "n" + Date.now(), name: ME.name, seed: ME.seed, vp: ME.vp, role: ME.role, voted: myVoted, time: "now", people: 0, vpUp: 0, text, replies: [] };
     setComments((L) => addReplyTree(L, parentId, base));
   };
@@ -215,7 +216,7 @@ function DiscussionPanel({ detail, state }) {
   const post = () => {
     if (!draft.trim()) return;
     const base = postAnon
-      ? { id: "n" + Date.now(), anon: true, badges: myVoted ? ["verified", "voted"] : ["verified"], time: "now", upvotes: 0, text: draft.trim(), replies: [] }
+      ? { id: "n" + Date.now(), anon: true, badges: myVoted ? ["verified", "voted"] : ["verified"], vp: ME.vp, time: "now", upvotes: 0, text: draft.trim(), replies: [] }
       : { id: "n" + Date.now(), name: ME.name, seed: ME.seed, vp: ME.vp, role: ME.role, voted: myVoted, time: "now", people: 0, vpUp: 0, text: draft.trim(), replies: [] };
     setComments((L) => [base, ...L]);
     setDraft("");

@@ -35,8 +35,8 @@ function publicComment({ name, seed, vp, role = "holder", voted = true, time, pe
   return { id: uid(), name, seed: seed || name, vp, role, voted, time, people, vpUp, mine: false, text, replies };
 }
 
-function anonComment({ badges = ["verified"], time, upvotes, text, replies = [] }) {
-  return { id: uid(), anon: true, badges, time, upvotes, mine: false, text, replies };
+function anonComment({ badges = ["verified"], vp, time, upvotes, text, replies = [] }) {
+  return { id: uid(), anon: true, badges, vp, time, upvotes, mine: false, text, replies };
 }
 
 const PROPOSAL_DETAILS = {
@@ -99,8 +99,8 @@ const PROPOSAL_DETAILS = {
       publicComment({ name: "researchdao.eth", vp: 41_000, time: "11h ago", people: 27, vpUp: 95_000, text: "The protocol research carve-out is the most valuable line item here. We have been bottlenecked on independent review for two cycles." }),
     ],
     anonComments: [
-      anonComment({ badges: ["verified", "voted"], time: "2h ago", upvotes: 24, text: "The grants committee needs stronger conflict-of-interest disclosure before receiving this budget." }),
-      anonComment({ badges: ["verified", "voted"], time: "5h ago", upvotes: 41, text: "As someone who applied last cycle: the bottleneck was review turnaround. Add a two-week review SLA." }),
+      anonComment({ vp: 76_000, badges: ["verified", "voted"], time: "2h ago", upvotes: 24, text: "The grants committee needs stronger conflict-of-interest disclosure before receiving this budget." }),
+      anonComment({ vp: 154_000, badges: ["verified", "voted"], time: "5h ago", upvotes: 41, text: "As someone who applied last cycle: the bottleneck was review turnaround. Add a two-week review SLA." }),
     ],
   },
 
@@ -160,8 +160,8 @@ const PROPOSAL_DETAILS = {
       publicComment({ name: "lighthouse.eth", vp: 410_000, role: "author", time: "5h ago", people: 41, vpUp: 640_000, text: "Author note: this is a parameter trial, not a permanent fee policy. Reversion remains available at any point." }),
     ],
     anonComments: [
-      anonComment({ badges: ["verified", "voted"], time: "45m ago", upvotes: 18, text: "Aggregators are already routing around the fee. We should test the lower switch before the behavior becomes sticky." }),
-      anonComment({ badges: ["eligible"], time: "4h ago", upvotes: 7, text: "Would prefer a 45-day review. Thirty days may be too noisy." }),
+      anonComment({ vp: 88_000, badges: ["verified", "voted"], time: "45m ago", upvotes: 18, text: "Aggregators are already routing around the fee. We should test the lower switch before the behavior becomes sticky." }),
+      anonComment({ vp: 21_500, badges: ["eligible"], time: "4h ago", upvotes: 7, text: "Would prefer a 45-day review. Thirty days may be too noisy." }),
     ],
   },
 
@@ -221,8 +221,8 @@ const PROPOSAL_DETAILS = {
       publicComment({ name: "0xf7a3...c40e", vp: 14_100, time: "6h ago", people: 8, vpUp: 42_000, text: "Support the goal, but the DAO should define signer removal criteria before adding more people." }),
     ],
     anonComments: [
-      anonComment({ badges: ["verified"], time: "1h ago", upvotes: 12, text: "Independent signers help, but response SLA monitoring should be public." }),
-      anonComment({ badges: ["eligible"], time: "7h ago", upvotes: 5, text: "Would like to see a quarterly signer health report after this passes." }),
+      anonComment({ vp: 63_000, badges: ["verified"], time: "1h ago", upvotes: 12, text: "Independent signers help, but response SLA monitoring should be public." }),
+      anonComment({ vp: 9_400, badges: ["eligible"], time: "7h ago", upvotes: 5, text: "Would like to see a quarterly signer health report after this passes." }),
     ],
   },
 
@@ -274,8 +274,8 @@ const PROPOSAL_DETAILS = {
       publicComment({ name: "kpatel.eth", vp: 132_000, role: "core", voted: false, time: "6h ago", people: 11, vpUp: 144_000, text: "We need clear anti-sybil criteria for nominations before this goes to vote." }),
     ],
     anonComments: [
-      anonComment({ badges: ["verified"], time: "1h ago", upvotes: 19, text: "Please keep the first two quarters capped. Rolling programs are easy to start and hard to stop." }),
-      anonComment({ badges: ["eligible"], time: "5h ago", upvotes: 9, text: "A private allocation ballot is a good fit here. Public allocation voting turns into reputation pressure quickly." }),
+      anonComment({ vp: 112_000, badges: ["verified"], time: "1h ago", upvotes: 19, text: "Please keep the first two quarters capped. Rolling programs are easy to start and hard to stop." }),
+      anonComment({ vp: 17_800, badges: ["eligible"], time: "5h ago", upvotes: 9, text: "A private allocation ballot is a good fit here. Public allocation voting turns into reputation pressure quickly." }),
     ],
   },
 
@@ -334,8 +334,8 @@ const PROPOSAL_DETAILS = {
       publicComment({ name: "kpatel.eth", vp: 132_000, role: "author", time: "2d ago", people: 24, vpUp: 188_000, text: "The deposit amount is intentionally high enough to deter spam but low enough for working groups to coordinate around." }),
     ],
     anonComments: [
-      anonComment({ badges: ["verified", "voted"], time: "1d ago", upvotes: 31, text: "The proposal is directionally right, but the challenge process needs an appeal path." }),
-      anonComment({ badges: ["verified"], time: "2d ago", upvotes: 14, text: "Delegates should sponsor more proposals instead of changing the protocol threshold." }),
+      anonComment({ vp: 205_000, badges: ["verified", "voted"], time: "1d ago", upvotes: 31, text: "The proposal is directionally right, but the challenge process needs an appeal path." }),
+      anonComment({ vp: 39_000, badges: ["verified"], time: "2d ago", upvotes: 14, text: "Delegates should sponsor more proposals instead of changing the protocol threshold." }),
     ],
   },
 
@@ -395,8 +395,8 @@ const PROPOSAL_DETAILS = {
       publicComment({ name: "mlaporte.eth", vp: 96_000, role: "author", time: "10d ago", people: 34, vpUp: 360_000, text: "We will publish monitoring snapshots after the 10% and 50% rollout gates." }),
     ],
     anonComments: [
-      anonComment({ badges: ["verified", "voted"], time: "8d ago", upvotes: 26, text: "Restaking hooks are worth the migration risk if the cap stays enforced." }),
-      anonComment({ badges: ["verified"], time: "9d ago", upvotes: 10, text: "Please make the withdraw-only v2 window very visible in the app." }),
+      anonComment({ vp: 67_500, badges: ["verified", "voted"], time: "8d ago", upvotes: 26, text: "Restaking hooks are worth the migration risk if the cap stays enforced." }),
+      anonComment({ vp: 24_300, badges: ["verified"], time: "9d ago", upvotes: 10, text: "Please make the withdraw-only v2 window very visible in the app." }),
     ],
   },
 
@@ -455,8 +455,8 @@ const PROPOSAL_DETAILS = {
       publicComment({ name: "yieldops.eth", vp: 160_000, time: "15d ago", people: 18, vpUp: 210_000, text: "Idle reserves have a real opportunity cost. A smaller pilot may be the compromise path." }),
     ],
     anonComments: [
-      anonComment({ badges: ["verified", "voted"], time: "14d ago", upvotes: 38, text: "I voted against because the downside case was not modeled clearly enough." }),
-      anonComment({ badges: ["verified"], time: "15d ago", upvotes: 11, text: "Treasury diversification is sensible, but not before the DAO defines risk limits." }),
+      anonComment({ vp: 91_000, badges: ["verified", "voted"], time: "14d ago", upvotes: 38, text: "I voted against because the downside case was not modeled clearly enough." }),
+      anonComment({ vp: 33_700, badges: ["verified"], time: "15d ago", upvotes: 11, text: "Treasury diversification is sensible, but not before the DAO defines risk limits." }),
     ],
   },
 
@@ -516,8 +516,8 @@ const PROPOSAL_DETAILS = {
       publicComment({ name: "securitydao.eth", vp: 610_000, time: "22d ago", people: 45, vpUp: 870_000, text: "Strong for. Removing unused bridge code is one of the simplest ways to reduce protocol risk." }),
     ],
     anonComments: [
-      anonComment({ badges: ["verified", "voted"], time: "21d ago", upvotes: 29, text: "Near-unanimous because this had two cycles of notice. Good process." }),
-      anonComment({ badges: ["eligible"], time: "22d ago", upvotes: 6, text: "Support should publish screenshots for wallets that still show v1 routes." }),
+      anonComment({ vp: 58_200, badges: ["verified", "voted"], time: "21d ago", upvotes: 29, text: "Near-unanimous because this had two cycles of notice. Good process." }),
+      anonComment({ vp: 12_100, badges: ["eligible"], time: "22d ago", upvotes: 6, text: "Support should publish screenshots for wallets that still show v1 routes." }),
     ],
   },
 };
