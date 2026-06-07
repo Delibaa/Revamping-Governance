@@ -174,12 +174,12 @@ function SortDropdown({ value, onChange, anon }) {
 }
 
 /* ---- discussion panel ---- */
-function DiscussionPanel({ state }) {
+function DiscussionPanel({ detail, state }) {
   const [sort, setSort] = React.useState("new");
   const [postAnon, setPostAnon] = React.useState(false);
   const [comments, setComments] = React.useState(() => {
-    const pub = JSON.parse(JSON.stringify(PUBLIC_COMMENTS));
-    const anon = JSON.parse(JSON.stringify(ANON_COMMENTS));
+    const pub = JSON.parse(JSON.stringify(detail.publicComments || []));
+    const anon = JSON.parse(JSON.stringify(detail.anonComments || []));
     const merged = [];
     const max = Math.max(pub.length, anon.length);
     for (let i = 0; i < max; i++) {
@@ -190,7 +190,7 @@ function DiscussionPanel({ state }) {
   });
   const [draft, setDraft] = React.useState("");
   const archived = state === "ended";
-  const myVoted = state !== "active";
+  const myVoted = state === "voted" || state === "ended";
 
   const sorted = React.useMemo(() => {
     const arr = [...comments];
