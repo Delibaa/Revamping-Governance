@@ -260,13 +260,6 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes cardIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
 .modal-title { font-size: 16px; font-weight: 640; margin: 0 0 6px; color: var(--ink); }
 .modal-sub { font-size: 12.5px; color: var(--ink-3); margin: 0 0 16px; line-height: 1.5; }
-.receipt-opt { display: flex; align-items: flex-start; gap: 12px; width: 100%; text-align: left; padding: 13px 15px; border-radius: var(--r-md); border: 1.5px solid var(--line); background: var(--card); transition: 0.12s; margin-bottom: 9px; }
-.receipt-opt:hover { border-color: var(--accent-line); background: var(--accent-tint); }
-.receipt-opt.sel { border-color: var(--accent); background: var(--accent-tint); }
-.receipt-opt .r-ico { width: 32px; height: 32px; border-radius: 9px; background: var(--bg-sunk); border: 1px solid var(--line); display: grid; place-items: center; color: var(--ink-2); flex: none; }
-.receipt-opt.sel .r-ico { background: var(--card); border-color: var(--accent-line); color: var(--accent-ink); }
-.receipt-opt .r-name { display: block; font-weight: 580; font-size: 14px; color: var(--ink); margin-bottom: 2px; }
-.receipt-opt .r-desc { display: block; font-size: 12px; color: var(--ink-3); line-height: 1.45; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
 .dlg-spinner { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; border: 2px solid var(--accent-line); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -528,7 +521,7 @@ button { font-family: inherit; cursor: pointer; }
   <script type="text/babel" src="src/data-proposal.js?v=3"></script>
   <script type="text/babel" src="src/data-proposals-list.js?v=2"></script>
   <script type="text/babel" src="src/overview-card.jsx?v=2"></script>
-  <script type="text/babel" src="src/voting-panel.jsx?v=21"></script>
+  <script type="text/babel" src="src/voting-panel.jsx?v=26"></script>
   <script type="text/babel" src="src/discussion-panel.jsx?v=6"></script>
   <script type="text/babel" src="src/proposals-index.jsx?v=3"></script>
   <script type="text/babel" src="src/app-detail.jsx?v=3"></script>

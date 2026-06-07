@@ -20,11 +20,7 @@ function Sparkline({ data, color = "var(--accent)", fill = "var(--accent-tint)",
   );
 }
 
-/* ---- post-submit receipt choice dialog ---- */
-const RECEIPT_OPTIONS = [
-  { key: "trust", icon: "shield", name: "Cast a vote" },
-  { key: "verify", icon: "eye", name: "Challenge a vote" },
-];
+/* ---- post-submit vote dialog ---- */
 const BROKERS = [
   { key: "coinbase", name: "Coinbase" },
   { key: "anchorage", name: "Anchorage" },
@@ -32,7 +28,32 @@ const BROKERS = [
   { key: "bitgo", name: "BitGo" },
   { key: "kraken", name: "Kraken" },
 ];
-function ChallengeSequence({ brokerName, rounds, onDone }) {
+
+function randHex(len) {
+  let s = "";
+  for (let i = 0; i < len; i++) s += Math.floor(Math.random() * 16).toString(16);
+  return s;
+}
+
+function BallotBlock({ label, ballot }) {
+  return (
+    <div style={{ padding: "13px 15px", borderRadius: "var(--r-md)", border: "1.5px solid var(--line)", background: "var(--bg-sunk)", marginBottom: 16 }}>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)", marginBottom: 10 }}>{label}</div>
+      <div className="mono" style={{ fontSize: 11.5, color: "var(--ink-2)", lineHeight: 1.6, wordBreak: "break-all" }}>
+        <div style={{ marginBottom: 8 }}>
+          <span style={{ color: "var(--ink-3)" }}>Encrypted ballot</span><br />
+          0x{ballot.hash}
+        </div>
+        <div>
+          <span style={{ color: "var(--ink-3)" }}>proof — π</span><br />
+          0x{ballot.proof}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChallengeSequence({ brokerName, rounds, doneLabel, onDone }) {
   const [round, setRound] = React.useState(0);
   const [log, setLog] = React.useState([]);
   const finished = round >= rounds;
@@ -40,7 +61,7 @@ function ChallengeSequence({ brokerName, rounds, onDone }) {
   React.useEffect(() => {
     if (finished) return;
     const t = setTimeout(() => {
-      setLog((l) => [...l, { challenged: round < rounds - 1 }]);
+      setLog((l) => [...l, {}]);
       setRound((r) => r + 1);
     }, 900);
     return () => clearTimeout(t);
@@ -48,17 +69,17 @@ function ChallengeSequence({ brokerName, rounds, onDone }) {
 
   return (
     <>
-      <h3 className="modal-title">{finished ? "Challenge complete — ballot ready" : "Challenging your encrypted ballot…"}</h3>
+      <h3 className="modal-title">{finished ? "Challenge complete — broker verified honest" : "Challenging your encrypted ballot…"}</h3>
       <p style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55, margin: "0 0 16px" }}>
         {finished
-          ? <>You opened and verified {rounds - 1} encrypted ballots from {brokerName} — each one matched your selection and was discarded. The final round stayed sealed, and that's the ballot being cast as your vote.</>
-          : <>Each round, {brokerName} seals your choice into a fresh encrypted ballot. You can open it to confirm it matches your selection — but an opened ballot is discarded and can never be cast. Eventually one round goes unopened, and that's the ballot that becomes your vote.</>}
+          ? <>You opened and verified {rounds} encrypted ballots from {brokerName} — every one matched your selection and was discarded. Now {brokerName} will seal a fresh ballot for you to look over.</>
+          : <>Each round, {brokerName} seals your choice into a fresh encrypted ballot, then opens it so you can confirm it matches your selection. An opened ballot is discarded and can never be cast — once enough rounds pass, you'll get a brand-new ballot to vote with.</>}
       </p>
       <div className="challenge-log" style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: finished ? 18 : 6, maxHeight: 230, overflowY: "auto" }}>
-        {log.map((r, i) => (
+        {log.map((_, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "var(--ink-2)" }}>
-            <Icon name="checkSmall" size={13} sw={2.4} style={{ color: r.challenged ? "var(--for)" : "var(--accent)", flexShrink: 0 }} />
-            <span>Round {i + 1} — encrypted, {r.challenged ? "opened & matched your choice — discarded" : "stayed sealed — this is your vote"}</span>
+            <Icon name="checkSmall" size={13} sw={2.4} style={{ color: "var(--for)", flexShrink: 0 }} />
+            <span>Round {i + 1} — encrypted, opened &amp; matched your choice — discarded</span>
           </div>
         ))}
         {!finished && (
@@ -71,36 +92,41 @@ function ChallengeSequence({ brokerName, rounds, onDone }) {
       {finished && (
         <div className="modal-actions">
           <button className="btn btn--primary" onClick={onDone}>
-            <Icon name="shield" size={14} /> Done — cast my vote
+            <Icon name="sparkle" size={14} /> {doneLabel}
           </button>
         </div>
       )}
     </>
   );
 }
-function ReceiptChoiceDialog({ onPick, onClose }) {
-  const [picked, setPicked] = React.useState(null);
+
+function SubmitVoteDialog({ onPick, onClose }) {
   const [broker, setBroker] = React.useState("");
-  const [verifying, setVerifying] = React.useState(false);
+  const [phase, setPhase] = React.useState("broker"); // broker | sealing | ballot | challenging
   const [rounds, setRounds] = React.useState(10);
-  const ready = picked && broker;
+  const [ballot, setBallot] = React.useState(null);
+  const [ballotNum, setBallotNum] = React.useState(0);
   const brokerName = BROKERS.find((b) => b.key === broker)?.name;
 
-  const confirm = () => {
-    if (!ready) return;
-    if (picked === "verify") setVerifying(true);
-    else onPick(broker);
-  };
+  React.useEffect(() => {
+    if (phase !== "sealing") return;
+    const t = setTimeout(() => {
+      setBallot({ hash: randHex(56), proof: randHex(40) });
+      setBallotNum((n) => n + 1);
+      setPhase("ballot");
+    }, 1300);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  const closable = phase === "broker" || phase === "ballot";
 
   return (
-    <div className="modal-veil" onClick={verifying ? undefined : onClose}>
+    <div className="modal-veil" onClick={closable ? onClose : undefined}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        {verifying ? (
-          <ChallengeSequence brokerName={brokerName} rounds={rounds} onDone={() => onPick(broker)} />
-        ) : (
+
+        {phase === "broker" && (
           <>
             <h3 className="modal-title">One more thing before this is final</h3>
-
             <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)", margin: "0 0 6px" }}>
               Tally broker <span style={{ color: "var(--against)" }}>*</span>
             </label>
@@ -117,40 +143,63 @@ function ReceiptChoiceDialog({ onPick, onClose }) {
                 <Icon name="chevron" size={15} />
               </span>
             </div>
-
-            <div>
-              {RECEIPT_OPTIONS.map((o) => (
-                <button key={o.key} className={"receipt-opt" + (picked === o.key ? " sel" : "")} onClick={() => setPicked(o.key)}>
-                  <span className="r-ico"><Icon name={o.icon} size={16} /></span>
-                  <span>
-                    <span className="r-name">{o.name}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {picked === "verify" && (
-              <div style={{ margin: "14px 2px 16px", padding: "12px 14px", borderRadius: "var(--r-md)", border: "1.5px solid var(--line)", background: "var(--bg-sunk)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)", marginBottom: 8 }}>
-                  <span>Challenge rounds</span>
-                  <span className="mono" style={{ color: "var(--ink)" }}>{rounds}</span>
-                </div>
-                <input type="range" min={5} max={30} value={rounds} onChange={(e) => setRounds(+e.target.value)}
-                  style={{ width: "100%", accentColor: "var(--accent)" }} />
-                <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 6, lineHeight: 1.5 }}>
-                  Each round opens and verifies an encrypted ballot before discarding it. More rounds means stronger proof the broker is sealing honestly — but takes longer to run.
-                </div>
-              </div>
-            )}
-
+            <p style={{ fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.55, margin: "0 0 16px" }}>
+              {brokerName ? brokerName : "Your broker"} will seal your choice into an encrypted ballot and a proof, then hand both back to you.
+            </p>
             <div className="modal-actions">
               <button className="btn" onClick={onClose}>Cancel</button>
-              <button className="btn btn--primary" disabled={!ready} onClick={confirm}>
-                <Icon name="shield" size={14} /> Confirm &amp; submit
+              <button className="btn btn--primary" disabled={!broker} onClick={() => setPhase("sealing")}>
+                <Icon name="shield" size={14} /> Continue
               </button>
             </div>
           </>
         )}
+
+        {phase === "sealing" && (
+          <>
+            <h3 className="modal-title">{ballotNum === 0 ? "Sealing your ballot…" : "Sealing a fresh ballot…"}</h3>
+            <p style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55, margin: "0 0 18px" }}>
+              {brokerName} is encrypting your choice and generating a zero-knowledge proof that the ballot is well-formed.
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "var(--ink-3)" }}>
+              <span className="dlg-spinner" />
+              <span>Encrypting &amp; proving…</span>
+            </div>
+          </>
+        )}
+
+        {phase === "ballot" && (
+          <>
+            <h3 className="modal-title">{ballotNum === 1 ? "Your encrypted ballot is ready" : `Ballot #${ballotNum} is ready`}</h3>
+            <p style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55, margin: "0 0 16px" }}>
+              {ballotNum === 1
+                ? <>{brokerName} sealed your choice as follows. Cast it now — or challenge it first to confirm {brokerName} sealed it honestly. An opened ballot can't be cast, so challenging it means you'll get a brand-new one to decide on again.</>
+                : <>Here's a fresh ballot from {brokerName}. Cast it, or challenge it again — there's no limit to how many times you verify before you're satisfied. Only casting ends the process.</>}
+            </p>
+            <BallotBlock label={`Sealed by ${brokerName} · ballot #${ballotNum}`} ballot={ballot} />
+            <div style={{ margin: "0 2px 16px", padding: "12px 14px", borderRadius: "var(--r-md)", border: "1.5px solid var(--line)", background: "var(--bg-sunk)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)", marginBottom: 8 }}>
+                <span>If you challenge — rounds to run</span>
+                <span className="mono" style={{ color: "var(--ink)" }}>{rounds}</span>
+              </div>
+              <input type="range" min={5} max={30} value={rounds} onChange={(e) => setRounds(+e.target.value)}
+                style={{ width: "100%", accentColor: "var(--accent)" }} />
+            </div>
+            <div className="modal-actions" style={{ justifyContent: "space-between" }}>
+              <button className="btn" onClick={() => setPhase("challenging")}>
+                <Icon name="eye" size={14} /> Challenge this ballot
+              </button>
+              <button className="btn btn--primary" onClick={() => onPick(broker)}>
+                <Icon name="shield" size={14} /> Cast this ballot
+              </button>
+            </div>
+          </>
+        )}
+
+        {phase === "challenging" && (
+          <ChallengeSequence brokerName={brokerName} rounds={rounds} doneLabel="Get a new ballot" onDone={() => setPhase("sealing")} />
+        )}
+
       </div>
     </div>
   );
@@ -225,7 +274,7 @@ function VotingPanel({ state, myVote, onVote }) {
       </div>
 
       {confirming && (
-        <ReceiptChoiceDialog onPick={finalizeVote} onClose={() => setConfirming(false)} />
+        <SubmitVoteDialog onPick={finalizeVote} onClose={() => setConfirming(false)} />
       )}
     </section>
   );
