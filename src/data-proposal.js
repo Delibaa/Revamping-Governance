@@ -35,8 +35,12 @@ function publicComment({ name, seed, vp, role = "holder", voted = true, time, pe
   return { id: uid(), name, seed: seed || name, vp, role, voted, time, people, vpUp, mine: false, text, replies };
 }
 
-function anonComment({ badges = ["verified"], vp, time, upvotes, text, replies = [] }) {
-  return { id: uid(), anon: true, badges, vp, time, upvotes, mine: false, text, replies };
+const ANON_UPVOTE_VP_BUCKETS = [1800, 2400, 3100, 3800, 4600, 5500];
+
+function anonComment({ badges = ["verified"], vp, time, upvotes, vpUp, text, replies = [] }) {
+  const id = uid();
+  const bucket = ANON_UPVOTE_VP_BUCKETS[(_id + upvotes) % ANON_UPVOTE_VP_BUCKETS.length];
+  return { id, anon: true, badges, vp, time, upvotes, vpUp: vpUp ?? upvotes * bucket, mine: false, text, replies };
 }
 
 const PROPOSAL_DETAILS = {

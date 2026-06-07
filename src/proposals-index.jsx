@@ -147,7 +147,7 @@ function ProposalsApp() {
           <div className="brand"><span className="brand-mark"></span> Veil <small>governance</small></div>
         </div>
         <div className="topbar-right">
-          <Avatar seed="you.eth" label="you" className="topbar-avatar" />
+          <AccountMenu />
         </div>
       </header>
 

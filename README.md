@@ -6,8 +6,7 @@ A front-end prototype for a privacy-preserving DAO governance UI: proposal listi
 
 This is a static React + Babel (in-browser JSX) app — no build step required.
 
-- **Editable source**: open [index.html](index.html) in a browser (or serve the directory with any static file server). It loads the `src/*.jsx` files directly via `<script type="text/babel">`.
-- **Standalone bundle**: [`DAO Governance (standalone).html`](<DAO Governance (standalone).html>) is a single self-contained file with everything inlined — open it directly with no server needed.
+- Open [index.html](index.html) in a browser, or serve the directory with any static file server. It loads the `src/*.jsx` files directly via `<script type="text/babel">`.
 
 ## Structure
 
@@ -21,7 +20,3 @@ This is a static React + Babel (in-browser JSX) app — no build step required.
 - `src/shared-ui.jsx` — shared components (icons, avatars, badges, etc.)
 - `src/data-proposal.js`, `src/data-proposals-list.js` — mock proposal data
 - `lib/` — vendored React, ReactDOM, and Babel standalone builds
-
-## Keeping the standalone bundle in sync
-
-`DAO Governance (standalone).html` embeds a gzip+base64-encoded copy of each `src/*.jsx` file plus the page CSS/template in its own manifest. Whenever you edit a `src/*.jsx` file or `index.html`'s styles, the corresponding entry in the standalone bundle must be re-encoded to match — otherwise the two versions will drift apart.
