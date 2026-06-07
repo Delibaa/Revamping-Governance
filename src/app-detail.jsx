@@ -86,7 +86,7 @@ function App({ detail: detailProp, initialState: initState }) {
           </div>
         </div>
         <div className="topbar-right">
-          <Avatar seed="you.eth" label="you" className="topbar-avatar" />
+          <AccountMenu />
         </div>
       </header>
 
