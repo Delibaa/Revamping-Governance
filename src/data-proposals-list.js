@@ -8,8 +8,8 @@ const ELIGIBLE_VP = 12_070_000;
 const PROPOSALS = [
   {
     id: "PGF-014",
-    title: "Allocate 1.2M USDC to the Public Goods Grants Program",
-    summary: "Fund a 6-month grants program for public goods, protocol research, and ecosystem tooling. Released in two tranches against published, on-chain attestable milestones.",
+    title: "Raise Funds for the Best Cause Ever 🐦",
+    summary: "A wildly earnest funding request for the best cause ever: ending the pigeon takeover of DAOs through humane, non-lethal deterrence, governance hygiene, and cleanup.",
     author: "sofia.eth",
     tags: ["Treasury", "Grants"],
     status: "active", phase: "voting",

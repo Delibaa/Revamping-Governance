@@ -5,7 +5,7 @@ const ELIGIBLE_VOTER_COUNT = 4120;
 let _id = 0;
 const uid = () => "c" + (++_id);
 
-const makeSection = (heading, body) => ({ heading, body });
+const makeSection = (heading, body, options = {}) => ({ heading, body, ...options });
 
 const makeVoters = (rows) => rows.map((row) => ({
   sub: null,
@@ -52,8 +52,8 @@ function anonComment({ badges = ["verified"], vp, time, upvotes, vpUp, text, rep
 const PROPOSAL_DETAILS = {
   "PGF-014": {
     id: "PGF-014",
-    title: "Allocate 1.2M USDC to the Public Goods Grants Program",
-    summary: "This proposal asks the DAO to fund a 6-month grants program supporting public goods, protocol research, and ecosystem tooling. Funds are released in two tranches against published milestones.",
+    title: "Raise Funds for the Best Cause Ever 🐦",
+    summary: "A wildly earnest funding request for the best cause ever: ending the pigeon takeover of DAOs through humane, non-lethal deterrence, governance hygiene, and cleanup.",
     author: "sofia.eth",
     created: "May 28, 2026",
     votingStart: "Jun 1, 2026",
@@ -66,7 +66,7 @@ const PROPOSAL_DETAILS = {
     voterCount: 1296,
     eligibleCount: ELIGIBLE_VOTER_COUNT,
     fullDescription: [
-      makeSection("Abstract", "This proposal requests 1.2 million USDC from the Veil DAO treasury to fund a six-month Public Goods Grants Program (PGGP-01). The program will fund public infrastructure, protocol research, and ecosystem tooling. Funds are released in two equal tranches of 600k USDC, with the second tranche conditional on an on-chain milestone attestation from the grants committee."),
+      makeSection("Abstract", "This proposal requests 1.2 million USDC from the Veil DAO treasury to fund the Best Cause Ever initiative 🐦. The initiative's extremely serious, definitely-not-overdramatic goal is to end the pigeon takeover of DAOs through humane, non-lethal deterrence, relocation support, governance hygiene, and cleanup. Funds are released in two equal tranches of 600k USDC, with the second tranche conditional on an on-chain milestone attestation from the committee.", { boldPhrase: "goal is to end the pigeon takeover of DAOs" }),
       makeSection("Motivation", "The Veil ecosystem has accumulated meaningful treasury reserves without a structured mechanism to fund public-goods work. Two prior ad-hoc grant rounds demonstrated sustained demand: in the most recent cycle, 38 applications arrived for 380k USDC of available funding, a 2.7x oversubscription ratio."),
       makeSection("Specification", "A 5-of-7 grants multisig will publish evaluation criteria and a conflict-of-interest policy within 14 days of proposal passage. Applications are open globally and reviewed on a rolling two-week cycle.\n\nFunding tiers:\n- Micro grants up to 10k USDC: committee approval only\n- Standard grants from 10k to 75k USDC: approval plus 7-day community comment period\n- Large grants from 75k to 200k USDC: approval plus 14-day comment period and on-chain ratification"),
       makeSection("Budget Breakdown", "Tranche 1 releases 600k USDC on proposal passage and covers months 1-3. Tranche 2 releases 600k USDC after a mid-program milestone report confirms at least 70% of Tranche 1 milestones are complete.\n\nTarget allocation is 40% public infrastructure, 35% protocol research, and 25% ecosystem tooling. Any unallocated USDC returns to the treasury multisig."),

@@ -49,6 +49,18 @@ function ParticipationBar({ detail, state }) {
   );
 }
 
+function renderBoldPhrase(text, phrase) {
+  if (!phrase) return text;
+  const i = text.indexOf(phrase);
+  if (i === -1) return text;
+
+  return [
+    text.slice(0, i),
+    <strong key="bold-phrase">{phrase}</strong>,
+    text.slice(i + phrase.length),
+  ];
+}
+
 function OverviewCard({ detail, state, myVote, onAction }) {
   let resultCell;
   if (state === "ended") {
@@ -132,7 +144,7 @@ function OverviewCard({ detail, state, myVote, onAction }) {
             <div key={i} className="ov-section">
               <h3 className="ov-sh">{sec.heading}</h3>
               {sec.body.split("\n\n").map((para, j) => (
-                <p key={j} className="ov-para">{para}</p>
+                <p key={j} className="ov-para">{renderBoldPhrase(para, sec.boldPhrase)}</p>
               ))}
             </div>
           ))}
