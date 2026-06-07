@@ -53,7 +53,7 @@ function BallotBlock({ label, ballot }) {
   );
 }
 
-function ChallengeSequence({ brokerName, rounds, doneLabel, onDone }) {
+function ChallengeSequence({ brokerName, rounds, finalBallot, onComplete, onCast }) {
   const [round, setRound] = React.useState(0);
   const [log, setLog] = React.useState([]);
   const finished = round >= rounds;
@@ -67,13 +67,17 @@ function ChallengeSequence({ brokerName, rounds, doneLabel, onDone }) {
     return () => clearTimeout(t);
   }, [round, finished]);
 
+  React.useEffect(() => {
+    if (finished) onComplete();
+  }, [finished]);
+
   return (
     <>
       <h3 className="modal-title">{finished ? "Challenge complete — broker verified honest" : "Challenging your encrypted ballot…"}</h3>
       <p style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55, margin: "0 0 16px" }}>
         {finished
-          ? <>You opened and verified {rounds} encrypted ballots from {brokerName} — every one matched your selection and was discarded. Now {brokerName} will seal a fresh ballot for you to look over.</>
-          : <>Each round, {brokerName} seals your choice into a fresh encrypted ballot, then opens it so you can confirm it matches your selection. An opened ballot is discarded and can never be cast — once enough rounds pass, you'll get a brand-new ballot to vote with.</>}
+          ? <>You opened and verified {rounds} test ballots from {brokerName} — every one matched your selection and was discarded. {brokerName} sealed one final ballot just for you — cast it below to finish.</>
+          : <>Each round, {brokerName} seals your choice into a fresh test ballot, then opens it so you can confirm it matches your selection before it's discarded. Once all {rounds} rounds finish, {brokerName} will seal one brand-new ballot — that's the one you'll cast, and the process ends there.</>}
       </p>
       <div className="challenge-log" style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: finished ? 18 : 6, maxHeight: 230, overflowY: "auto" }}>
         {log.map((_, i) => (
@@ -89,12 +93,15 @@ function ChallengeSequence({ brokerName, rounds, doneLabel, onDone }) {
           </div>
         )}
       </div>
-      {finished && (
-        <div className="modal-actions">
-          <button className="btn btn--primary" onClick={onDone}>
-            <Icon name="sparkle" size={14} /> {doneLabel}
-          </button>
-        </div>
+      {finished && finalBallot && (
+        <>
+          <BallotBlock label={`Sealed by ${brokerName} · final ballot · #${rounds + 1}`} ballot={finalBallot} />
+          <div className="modal-actions">
+            <button className="btn btn--primary" onClick={onCast}>
+              <Icon name="shield" size={14} /> Cast this ballot
+            </button>
+          </div>
+        </>
       )}
     </>
   );
@@ -105,20 +112,19 @@ function SubmitVoteDialog({ onPick, onClose }) {
   const [phase, setPhase] = React.useState("broker"); // broker | sealing | ballot | challenging
   const [rounds, setRounds] = React.useState(10);
   const [ballot, setBallot] = React.useState(null);
-  const [ballotNum, setBallotNum] = React.useState(0);
+  const [finalBallot, setFinalBallot] = React.useState(null);
   const brokerName = BROKERS.find((b) => b.key === broker)?.name;
 
   React.useEffect(() => {
     if (phase !== "sealing") return;
     const t = setTimeout(() => {
       setBallot({ hash: randHex(56), proof: randHex(40) });
-      setBallotNum((n) => n + 1);
       setPhase("ballot");
     }, 1300);
     return () => clearTimeout(t);
   }, [phase]);
 
-  const closable = phase === "broker" || phase === "ballot";
+  const closable = phase === "broker" || phase === "ballot" || (phase === "challenging" && !!finalBallot);
 
   return (
     <div className="modal-veil" onClick={closable ? onClose : undefined}>
@@ -157,7 +163,7 @@ function SubmitVoteDialog({ onPick, onClose }) {
 
         {phase === "sealing" && (
           <>
-            <h3 className="modal-title">{ballotNum === 0 ? "Sealing your ballot…" : "Sealing a fresh ballot…"}</h3>
+            <h3 className="modal-title">Sealing your ballot…</h3>
             <p style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55, margin: "0 0 18px" }}>
               {brokerName} is encrypting your choice and generating a zero-knowledge proof that the ballot is well-formed.
             </p>
@@ -170,34 +176,37 @@ function SubmitVoteDialog({ onPick, onClose }) {
 
         {phase === "ballot" && (
           <>
-            <h3 className="modal-title">{ballotNum === 1 ? "Your encrypted ballot is ready" : `Ballot #${ballotNum} is ready`}</h3>
+            <h3 className="modal-title">Your encrypted ballot is ready</h3>
             <p style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55, margin: "0 0 16px" }}>
-              {ballotNum === 1
-                ? <>{brokerName} sealed your choice as follows. Cast it now — or challenge it first to confirm {brokerName} sealed it honestly. An opened ballot can't be cast, so challenging it means you'll get a brand-new one to decide on again.</>
-                : <>Here's a fresh ballot from {brokerName}. Cast it, or challenge it again — there's no limit to how many times you verify before you're satisfied. Only casting ends the process.</>}
+              {brokerName} sealed your choice as follows. Pick how many times to verify {brokerName}'s honesty before casting — each round opens and discards a freshly sealed test ballot. Choosing 0 casts this ballot right away; choosing N runs N rounds, then hands you one brand-new ballot — #(N + 1) — to cast, and the process ends there.
             </p>
-            <BallotBlock label={`Sealed by ${brokerName} · ballot #${ballotNum}`} ballot={ballot} />
+            <BallotBlock label={`Sealed by ${brokerName} · ballot #1`} ballot={ballot} />
             <div style={{ margin: "0 2px 16px", padding: "12px 14px", borderRadius: "var(--r-md)", border: "1.5px solid var(--line)", background: "var(--bg-sunk)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)", marginBottom: 8 }}>
-                <span>If you challenge — rounds to run</span>
-                <span className="mono" style={{ color: "var(--ink)" }}>{rounds}</span>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)" }}>Verification rounds before casting</div>
+                <div className="mono" style={{ fontSize: 12, color: "var(--ink)", marginTop: 3 }}>
+                  {rounds === 0 ? "0 — cast immediately" : `${rounds} round${rounds === 1 ? "" : "s"} → cast ballot #${rounds + 1}`}
+                </div>
               </div>
-              <input type="range" min={5} max={30} value={rounds} onChange={(e) => setRounds(+e.target.value)}
+              <input type="range" min={0} max={100} value={rounds} onChange={(e) => setRounds(+e.target.value)}
                 style={{ width: "100%", accentColor: "var(--accent)" }} />
             </div>
-            <div className="modal-actions" style={{ justifyContent: "space-between" }}>
-              <button className="btn" onClick={() => setPhase("challenging")}>
-                <Icon name="eye" size={14} /> Challenge this ballot
-              </button>
-              <button className="btn btn--primary" onClick={() => onPick(broker)}>
-                <Icon name="shield" size={14} /> Cast this ballot
+            <div className="modal-actions">
+              <button className="btn btn--primary" onClick={() => (rounds === 0 ? onPick(broker) : setPhase("challenging"))}>
+                <Icon name="shield" size={14} /> {rounds === 0 ? "Cast this ballot" : `Verify ${rounds}×, then cast`}
               </button>
             </div>
           </>
         )}
 
         {phase === "challenging" && (
-          <ChallengeSequence brokerName={brokerName} rounds={rounds} doneLabel="Get a new ballot" onDone={() => setPhase("sealing")} />
+          <ChallengeSequence
+            brokerName={brokerName}
+            rounds={rounds}
+            finalBallot={finalBallot}
+            onComplete={() => setFinalBallot((b) => b || { hash: randHex(56), proof: randHex(40) })}
+            onCast={() => onPick(broker)}
+          />
         )}
 
       </div>
